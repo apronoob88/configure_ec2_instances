@@ -43,13 +43,18 @@ CREATE TABLE IF NOT EXISTS reviews (
   KEY idx_asin (asin)
 ) ENGINE=InnoDB AUTO_INCREMENT=982632 DEFAULT CHARSET=utf8;
 
+LOAD DATA LOCAL INFILE '~/reviewers.csv' INTO TABLE reviewers
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\r\n'
+IGNORE 1 LINES
+(reviewer_id, reviewer_name, username, password);
+
+LOAD DATA LOCAL INFILE '~/reviews.csv' INTO TABLE reviews
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+(review_id, asin, likes, dislikes, overall_rating, review_text, review_time, reviewer_id, summary, unix_review_time);
+
 EOF
-# echo "Create bookwormies"
-
-# echo "Create reviews table"
-
-# echo "Loading reviews.csv data into reviews table"
-
-# echo "Create reviewers table"
-
-# echo "Loading reviewers.csv data into reviewers table"
