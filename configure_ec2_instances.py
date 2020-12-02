@@ -1,6 +1,7 @@
 import boto3
 from botocore.exceptions import ClientError
 import paramiko
+from scp import SCPClient
 import time
 import os
 
@@ -153,3 +154,89 @@ try:
 
 except Exception as e:
     print (e)
+
+mysql_ip = str(mysql.public_ip_address)
+print(f"setting up MySQL in ec2 instance with public IP address: {mysql_ip}. This may take a while....")
+
+# Connect/ssh to mysql instance
+try:
+    # Here 'ubuntu' is username and 'instance_ip' is public IP of EC2
+    ssh_client.connect(hostname=mysql_ip, username="ubuntu", pkey=key)
+
+    # SCPClient
+    print("Copying csv files from local to MySQL instance...")
+    scp = SCPClient(ssh_client.get_transport())
+
+    # print("Copying reviews.csv from local to MySQL instance")
+    # localpath = './data/reviews.csv'
+    # remotepath = '~/data/reviews.csv'
+    # scp.put(localpath, remotepath)
+    # scp.get(remotepath)
+    # print("reviews.csv transferred!")
+
+    # print("Copying reviewers.csv from local to MySQL instance")
+    # localpath = './data/reviewers.csv'
+    # remotepath = '~/data/reviewers.csv'
+    # scp.put(localpath, remotepath)
+    # scp.get(remotepath)
+    # print("reviewers.csv transferred!")
+
+    print("Copying mysql_setup.sh file from local to MySQL instance")
+    localpath = './mysql_setup.sh'
+    remotepath = '~/mysql_setup.sh'
+    scp.put(localpath, remotepath)
+    scp.get(remotepath)
+    print("mysql_setup.sh transferred!")
+
+    scp.close()
+
+    # Execute the commands after connecting/ssh to an instance
+    cmd = 'sh mysql_setup.sh'
+
+    stdin, stdout, stderr = ssh_client.exec_command(cmd)
+    stdout.read()
+    print("mysql successfully set up!")
+    # close the client connection once the job is done
+    ssh_client.close()
+
+except Exception as e:
+    print(e)
+
+frontend_ip = str(frontend.public_ip_address)
+print(f"setting up frontend in ec2 instance with public IP address: {frontend_ip}. This may take a while....")
+
+# Connect/ssh to mysql instance
+try:
+    # Here 'ubuntu' is username and 'instance_ip' is public IP of EC2
+    ssh_client.connect(hostname=frontend_ip, username="ubuntu", pkey=key)
+
+    # SCPClient
+    print("Copying csv files from local to Frontend instance...")
+    scp = SCPClient(ssh_client.get_transport())
+
+    # Alternatively
+    print("Copying 50.043_DBBD folder from local to Frontend instance")
+    localpath = '../50.043_DBBD'
+    remotepath = '~/50.043_DBBD'
+    scp.put(localpath, recursive=True, remote_path=remotepath)
+
+    print("Copying frontend_setup.sh file from local to Frontend instance")
+    localpath = './frontend_setup.sh'
+    remotepath = '~/frontend_setup.sh'
+    scp.put(localpath, remotepath)
+    scp.get(remotepath)
+    print("frontend_setup.sh transferred!")
+
+    scp.close()
+
+    # Execute the commands after connecting/ssh to an instance
+    cmd = 'sh frontend_setup.sh'
+
+    stdin, stdout, stderr = ssh_client.exec_command(cmd)
+    stdout.read()
+    print("frontend successfully set up!")
+    # close the client connection once the job is done
+    ssh_client.close()
+
+except Exception as e:
+    print(e)
