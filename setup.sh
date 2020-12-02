@@ -14,6 +14,8 @@ then
 elif [[ "$OSTYPE" == "darwin"* ]]
 then
   brew install python3
+  # brew install git-lfs
+  # git lfs install
   python3 -m pip install boto3
   python3 -m pip install paramiko
   python3 -m pip install scp
@@ -22,5 +24,5 @@ else
   echo "This script is only for Unix based systems"
 fi
 
-wget https://raw.githubusercontent.com/apronoob88/configure_ec2_instances/master/configure_ec2_instances.py
+# wget https://raw.githubusercontent.com/apronoob88/configure_ec2_instances/master/configure_ec2_instances.py
 python3 configure_ec2_instances.py
