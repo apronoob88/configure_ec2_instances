@@ -171,6 +171,20 @@ try:
     scp.get(remotepath)
     print("mongo_setup.sh transferred!")
 
+    print("Copying create_mongo_user.js file from local to MongoDB instance")
+    localpath = './create_mongo_user.js'
+    remotepath = '~/create_mongo_user.js'
+    scp.put(localpath, remotepath)
+    scp.get(remotepath)
+    print("create_mongo_user.js transferred!")
+
+    print("Copying create_mongo_index.js file from local to MongoDB instance")
+    localpath = './create_mongo_index.js'
+    remotepath = '~/create_mongo_index.js'
+    scp.put(localpath, remotepath)
+    scp.get(remotepath)
+    print("create_mongo_index.js transferred!")
+
     scp.close()
 
     # Execute the commands after connecting/ssh to an instance
@@ -233,48 +247,48 @@ try:
 except Exception as e:
     print(e)
 
-frontend_ip = str(frontend.public_ip_address)
-print(f"setting up frontend in ec2 instance with public IP address: {frontend_ip}. This may take a while....")
+# frontend_ip = str(frontend.public_ip_address)
+# print(f"setting up frontend in ec2 instance with public IP address: {frontend_ip}. This may take a while....")
 
-# Connect/ssh to mysql instance
-try:
-    # Here 'ubuntu' is username and 'instance_ip' is public IP of EC2
-    ssh_client.connect(hostname=frontend_ip, username="ubuntu", pkey=key)
+# # Connect/ssh to mysql instance
+# try:
+#     # Here 'ubuntu' is username and 'instance_ip' is public IP of EC2
+#     ssh_client.connect(hostname=frontend_ip, username="ubuntu", pkey=key)
 
-    # SCPClient
-    print("Copying files from local to Frontend instance...")
-    scp = SCPClient(ssh_client.get_transport())
+#     # SCPClient
+#     print("Copying files from local to Frontend instance...")
+#     scp = SCPClient(ssh_client.get_transport())
 
-    # Alternatively
-    print("Copying 50.043_DBBD folder from local to Frontend instance")
-    localpath = '../50.043_DBBD'
-    remotepath = '~/50.043_DBBD'
-    scp.put(localpath, recursive=True, remote_path=remotepath)
+#     # Alternatively
+#     # print("Copying 50.043_DBBD folder from local to Frontend instance")
+#     # localpath = '../50.043_DBBD'
+#     # remotepath = '~/50.043_DBBD'
+#     # scp.put(localpath, recursive=True, remote_path=remotepath)
 
-    print("Copying config.json from local to Frontend instance")
-    localpath = './config.json'
-    remotepath = '~/config.json'
-    scp.put(localpath, remotepath)
-    scp.get(remotepath)
-    print("config.json transferred!")
+#     print("Copying config.json from local to Frontend instance")
+#     localpath = './config.json'
+#     remotepath = '~/config.json'
+#     scp.put(localpath, remotepath)
+#     scp.get(remotepath)
+#     print("config.json transferred!")
 
-    print("Copying frontend_setup.sh file from local to Frontend instance")
-    localpath = './frontend_setup.sh'
-    remotepath = '~/frontend_setup.sh'
-    scp.put(localpath, remotepath)
-    scp.get(remotepath)
-    print("frontend_setup.sh transferred!")
+#     print("Copying frontend_setup.sh file from local to Frontend instance")
+#     localpath = './frontend_setup.sh'
+#     remotepath = '~/frontend_setup.sh'
+#     scp.put(localpath, remotepath)
+#     scp.get(remotepath)
+#     print("frontend_setup.sh transferred!")
 
-    scp.close()
+#     scp.close()
 
-    # Execute the commands after connecting/ssh to an instance
-    cmd = 'sh frontend_setup.sh'
+#     # Execute the commands after connecting/ssh to an instance
+#     cmd = 'sh frontend_setup.sh'
 
-    stdin, stdout, stderr = ssh_client.exec_command(cmd)
-    stdout.read()
-    print("frontend successfully set up!")
-    # close the client connection once the job is done
-    ssh_client.close()
+#     stdin, stdout, stderr = ssh_client.exec_command(cmd)
+#     stdout.read()
+#     print("frontend successfully set up!")
+#     # close the client connection once the job is done
+#     ssh_client.close()
 
-except Exception as e:
-    print(e)
+# except Exception as e:
+#     print(e)

@@ -19,7 +19,6 @@ sudo systemctl restart mongod
 sleep 5
 
 # configure mongo
-wget https://raw.githubusercontent.com/apronoob88/configure_ec2_instances/master/create_mongo_user.js
 mongo < create_mongo_user.js
 sudo systemctl restart mongod
 
@@ -31,3 +30,4 @@ unzip meta_kindle_store_update.zip
 rm -rf *.zip
 
 mongoimport --db dbproject --collection metadata --authenticationDatabase admin --username yt --password password --drop --file ~/meta_kindle_store_update.json
+mongo -u yt -p password < create_mongo_index.js

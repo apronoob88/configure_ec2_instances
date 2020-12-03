@@ -36,7 +36,7 @@ try:
   # Terminate all instances
   print("Terminating all instances...")
   ec2.instances.filter(InstanceIds=ids).terminate()
-  time.sleep(10)
+  time.sleep(30)
   print("All instances terminated!")
 
   # Delete security group
