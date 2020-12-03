@@ -1,0 +1,23 @@
+{
+  "aws_access_key_id": "",
+  "aws_secret_access_key": "",
+  "aws_session_token": "",
+  "instance_ids": [],
+  "security_group_id": "",
+  "key_name": "",
+  "mongodb": {
+    "public_ip": "",
+    "database": "dbproject",
+    "username": "yt",
+    "password": "password"
+  },
+  "mysql": {
+    "public_ip": "",
+    "database": "bookwormies",
+    "username": "root",
+    "password": ""
+  },
+  "frontend": {
+    "public_ip": ""
+  }
+}
