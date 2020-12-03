@@ -3,11 +3,21 @@ from botocore.exceptions import ClientError
 import paramiko
 from scp import SCPClient
 import time
+import json
 import os
+
+# Set up configuration file
+with open("config.json", "r") as config_file:
+    config = json.load(config_file)
+    config_file.close()
 
 key = input("Enter your aws_access_key_id: ")
 secrete_key = input("Enter your aws_secret_access_key: ")
 session_token = input("Enter your aws_session_token: ")
+
+config['aws_access_key_id'] = key
+config['aws_secret_access_key'] = secrete_key
+config['aws_session_token'] = session_token
 
 ec2_client = boto3.client('ec2',
     aws_access_key_id=key,
@@ -41,6 +51,7 @@ try:
                                          Description='testing for security group for mongo',
                                          VpcId=vpc_id)
     security_group_id = response['GroupId']
+    config['security_group_id'] = security_group_id
     print('Security Group Created %s in vpc %s.' % (security_group_id, vpc_id))
 except ClientError as e:
 	print(e)
@@ -79,7 +90,7 @@ key_name = input("Enter a new ec2 key-pair name(without '.pem' behind): ")
 while (key_name in existing_key_pairs):
     key_name = input(f"{key_name} already exist, please enter an unique key-pair name: ")
 print(key_name)
-
+config['key_name'] = key_name
 
 # generate new ec2 key
 keypair = ec2_client.create_key_pair(KeyName=key_name)
@@ -112,20 +123,30 @@ mysql = instances[1]
 frontend = instances[2]
 print("Please wait for your instances to be created.....")
 
+ids = []
 # wait for instance to load
 for instance in instances:
-	instance.wait_until_running()
-	instance.load()
+    ids.append(instance.id)
+    instance.wait_until_running()
+    instance.load()
+
+config['instance_ids'] = ids
 
 # sleep for 30 seconds for the instance to be fully loaded up
-for i in range(30):
-	time.sleep(1)
+time.sleep(30)
 
 print("MongoDB public IP address is: ", mongodb.public_ip_address)
 #print("MongoDB private IP address is: ", mongodb.private_ip_address)
 print("MySQL public IP address is: ", mysql.public_ip_address)
 print("FrontEnd public IP address is: ", frontend.public_ip_address)
 
+config['mongodb']['public_ip'] = str(mongodb.public_ip_address)
+config['mysql']['public_ip'] = str(mysql.public_ip_address)
+config['frontend']['public_ip'] = str(frontend.public_ip_address)
+
+with open("config.json", "w") as config_file:
+    json.dump(config, config_file, indent=2)
+    config_file.close()
 
 key = paramiko.RSAKey.from_private_key_file(ec2_key)
 ssh_client = paramiko.SSHClient()
@@ -139,13 +160,23 @@ try:
     # Here 'ubuntu' is user name and 'instance_ip' is public IP of EC2
     ssh_client.connect(hostname=mongodb_ip, username="ubuntu", pkey=key)
 
-    # Execute the commands after connecting/ssh to an instance
-    cmd1 = 'wget https://raw.githubusercontent.com/apronoob88/configure_ec2_instances/master/mongo_setup.sh'
-    cmd2 = 'sh mongo_setup.sh'
-    stdin, stdout, stderr = ssh_client.exec_command(cmd1)
-    stdout.read()
+    # SCPClient
+    print("Copying files from local to MongoDB instance...")
+    scp = SCPClient(ssh_client.get_transport())
 
-    stdin, stdout, stderr = ssh_client.exec_command(cmd2)
+    print("Copying mongo_setup.sh file from local to MongoDB instance")
+    localpath = './mongo_setup.sh'
+    remotepath = '~/mongo_setup.sh'
+    scp.put(localpath, remotepath)
+    scp.get(remotepath)
+    print("mongo_setup.sh transferred!")
+
+    scp.close()
+
+    # Execute the commands after connecting/ssh to an instance
+    cmd = 'sh mongo_setup.sh'
+
+    stdin, stdout, stderr = ssh_client.exec_command(cmd)
     stdout.read()
     print("mongodb successfully set up!")
     # close the client connection once the job is done
@@ -164,24 +195,24 @@ try:
     ssh_client.connect(hostname=mysql_ip, username="ubuntu", pkey=key)
 
     # SCPClient
-    print("Copying csv files from local to MySQL instance...")
+    print("Copying files from local to MySQL instance...")
     scp = SCPClient(ssh_client.get_transport())
 
-    # print("Copying reviews.csv from local to MySQL instance")
-    # localpath = './data/reviews.csv'
-    # remotepath = '~/data/reviews.csv'
-    # scp.put(localpath, remotepath)
-    # scp.get(remotepath)
-    # print("reviews.csv transferred!")
+    print("Copying reviewers.csv from local to MySQL instance...")
+    localpath = './data/reviewers.csv'
+    remotepath = '~/reviewers.csv'
+    scp.put(localpath, remotepath)
+    scp.get(remotepath)
+    print("reviewers.csv transferred!")
 
-    # print("Copying reviewers.csv from local to MySQL instance")
-    # localpath = './data/reviewers.csv'
-    # remotepath = '~/data/reviewers.csv'
-    # scp.put(localpath, remotepath)
-    # scp.get(remotepath)
-    # print("reviewers.csv transferred!")
+    print("Copying reviews.csv from local to MySQL instance...")
+    localpath = './data/reviews.csv'
+    remotepath = '~/reviews.csv'
+    scp.put(localpath, remotepath)
+    scp.get(remotepath)
+    print("reviews.csv transferred!")
 
-    print("Copying mysql_setup.sh file from local to MySQL instance")
+    print("Copying mysql_setup.sh file from local to MySQL instance...")
     localpath = './mysql_setup.sh'
     remotepath = '~/mysql_setup.sh'
     scp.put(localpath, remotepath)
@@ -211,7 +242,7 @@ try:
     ssh_client.connect(hostname=frontend_ip, username="ubuntu", pkey=key)
 
     # SCPClient
-    print("Copying csv files from local to Frontend instance...")
+    print("Copying files from local to Frontend instance...")
     scp = SCPClient(ssh_client.get_transport())
 
     # Alternatively
@@ -219,6 +250,13 @@ try:
     localpath = '../50.043_DBBD'
     remotepath = '~/50.043_DBBD'
     scp.put(localpath, recursive=True, remote_path=remotepath)
+
+    print("Copying config.json from local to Frontend instance")
+    localpath = './config.json'
+    remotepath = '~/config.json'
+    scp.put(localpath, remotepath)
+    scp.get(remotepath)
+    print("config.json transferred!")
 
     print("Copying frontend_setup.sh file from local to Frontend instance")
     localpath = './frontend_setup.sh'
